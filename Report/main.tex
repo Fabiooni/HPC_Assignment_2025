@@ -4,6 +4,7 @@
 
 \usepackage{cite}
 \usepackage{svg}
+\usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
@@ -97,7 +98,7 @@ The filter must also be applied to a noiseless (ground truth) image to verify it
 \section*{Methodology and Architecture Optimization}
 
 \subsection*{Filter Implementation and Algorithmic Approach}
-The application requires the execution of a 2D stencil operation to process multi-dimensional data. The baseline operation consists of applying a specific $3\times3$ weighted average filter, denoted as $W$, to mitigate image noise \cite{assignment}. 
+The application requires the execution of a 2D stencil operation to process multi-dimensional data. The baseline operation consists of applying a specific $3\times3$ weighted average filter, denoted as $W$, to mitigate image noise. 
 
 The mathematical model relies on a discrete 2D spatial convolution, where each output pixel $g(x,y)$ is computed by convolving the input image $f$ with the static kernel $W$. To maximize throughput on the SIMT (Single Instruction, Multiple Threads) architecture of the NVIDIA GPU, the algorithm processes the three RGB color channels concurrently by allocating separate device memory buffers and executing the convolution kernels iteratively over the image grid.
 
@@ -158,7 +159,7 @@ if (x < width && y < height) {
 \section*{Experimental Results and Signal Analysis}
 
 \subsection*{Execution Performance and Hardware Determinism}
-Execution times were gathered across multiple runs for 4K, 8K, and 16K images using varying block sizes (Figure \ref{fig:block_size_impact}). The empirical data highlights the deterministic nature of the GPU hardware. For instance, processing a 16K image strictly required an average of $76.48$~ms (with a $32\times32$ block size) on a single A100 GPU, regardless of the noise density applied to the input (ranging from $0\%$ to $90\%$), as depicted in Figure \ref{fig:simd_determinism}. 
+Execution times were gathered across multiple runs for 4K, 8K, and 16K images using varying block sizes (Figure \ref{fig:block_size_impact_1}). The empirical data highlights the deterministic nature of the GPU hardware. For instance, processing a 16K image strictly required an average of $76.48$~ms (with a $32\times32$ block size) on a single A100 GPU, regardless of the noise density applied to the input (ranging from $0\%$ to $90\%$), as depicted in Figure \ref{fig:simd_determinism_1}. 
 
 This consistency is a direct consequence of the SIMT execution model. Unlike a CPU, which might employ branch prediction algorithms that vary execution time based on the data payload, the CUDA cores execute the exact same number of fetch and floating-point operations for every pixel. Since the linear convolution does not contain conditional branches dependent on pixel intensity, the computational load remains perfectly constant, demonstrating absolute hardware determinism and immunity to data-dependent execution jitter.
 
@@ -166,12 +167,12 @@ This consistency is a direct consequence of the SIMT execution model. Unlike a C
 To further investigate the architectural constraints, a comparative benchmark was conducted between a datacenter accelerator (NVIDIA A100, HBM2 memory) and a consumer-grade GPU (NVIDIA RTX 2060 Mobile, GDDR6 memory). The relative speed-up $S$ achieved by scaling the hardware is mathematically defined by Amdahl's framework as:
 $$ S = \frac{T_{\text{baseline}}}{T_{\text{target}}} $$
 
-The execution on the RTX 2060 (GDDR6 @ 336 GB/s) required an average of $220$~ms for a 16K resolution image, compared to the $76.48$~ms achieved by the A100 (HBM2 @ 1555 GB/s). The ratio between the execution times ($\sim2.8\times$) scales in a directly proportional manner to the ratio of their theoretical memory bandwidths ($\sim4.6\times$). This correlation, supported by the data in Table \ref{tab:hw_scalability} and Figure \ref{fig:hw_comparison}, definitively confirms the Memory-Bound nature of the 2D spatial convolution: the computational throughput is severely limited by the memory fetch latency, preventing the CUDA cores from saturating their Arithmetic Logic Unit (ALU) capacity. Similarly, distributing the workload across multiple A100 GPUs yielded a negative speed-up ($S < 1$), exposing the communication bottleneck of the PCIe bus overhead.
+The execution on the RTX 2060 (GDDR6 @ 336 GB/s) required an average of $220$~ms for a 16K resolution image, compared to the $76.48$~ms achieved by the A100 (HBM2 @ 1555 GB/s). The ratio between the execution times ($\sim2.8\times$) scales in a directly proportional manner to the ratio of their theoretical memory bandwidths ($\sim4.6\times$). This correlation, supported by the data in Table \ref{tab:hw_scalability} and Figure \ref{fig:Comparison_1}, definitively confirms the Memory-Bound nature of the 2D spatial convolution: the computational throughput is severely limited by the memory fetch latency, preventing the CUDA cores from saturating their Arithmetic Logic Unit (ALU) capacity. Similarly, distributing the workload across multiple A100 GPUs yielded a negative speed-up ($S < 1$), exposing the communication bottleneck of the PCIe bus overhead.
 
 \section*{Obtained Data}
 \subsection*{PSNR Degradation: Failure of Linear Filtering on Impulse Noise}
-The effectiveness of the assigned $W$ filter was quantitatively evaluated using the Peak Signal-to-Noise Ratio (PSNR) metric against independent colour impulse noise (Salt-and-Pepper). The experimental results (Figure \ref{fig:psnr_degradation}) demonstrate a catastrophic collapse of the PSNR as the noise density increases. For 16K images, the baseline PSNR drops from $36.18$~dB (clean image) down to $15.97$~dB at $90\%$ noise density, completely compromising the visual information.
-\input{CUDA/statistics_table}
+The effectiveness of the assigned $W$ filter was quantitatively evaluated using the Peak Signal-to-Noise Ratio (PSNR) metric against independent colour impulse noise (Salt-and-Pepper). The experimental results (Figure \ref{fig:psnr_degradation_1}) demonstrate a catastrophic collapse of the PSNR as the noise density increases. For 16K images, the baseline PSNR drops from $36.18$~dB (clean image) down to $15.97$~dB at $90\%$ noise density, completely compromising the visual information.
+\input{CUDA/statistics_table.tex}
 
 From a signal processing perspective, this behaviour is mathematically expected. The filter $W$ acts as a low-pass spatial filter (a weighted local average). Impulse noise introduces extremely high spatial frequencies, mathematically modelled as Dirac delta functions in the spatial domain. A linear operator like filter $W$ cannot reject these impulses; it merely computes their convolution, effectively distributing the noise energy over the adjacent pixels within its $3\times3$ support region. Consequently, the high-amplitude noise is not eliminated but rather spatially smeared, resulting in a blurred image with pervasive chromatic aberrations. 
 
@@ -182,70 +183,106 @@ This analysis strictly validates that while linear low-pass filters are effectiv
 \section*{Appendix: Figures and Data Tables}
 
 % Grafico 1: Block Size Impact
-\begin{figure}[h!]
+\begin{figure}[htbp]
     \includesvg[width=0.85\linewidth]{CUDA/Plot_1_1A100_BlockSize_Impact}
     \caption{Impact of Thread Block Size on Execution Time on a single NVIDIA A100.}
     \label{fig:block_size_impact_1}
 \end{figure}
 
-\begin{figure}[h!]
+\begin{figure}[htbp]
     \centering
     \includesvg[width=0.85\linewidth]{CUDA/Plot_1_2A100_BlockSize_Impact}
     \caption{Impact of Thread Block Size on Execution Time on two NVIDIA A100}
     \label{fig:block_size_impact_2}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[htbp]
     \centering
     \includesvg[width=0.85\linewidth]{CUDA/Plot_1_3A100_BlockSize_Impact}
     \caption{Impact of Thread Block Size on Execution Time on three NVIDIA A100}
     \label{fig:block_size_impact_3}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[htbp]
     \centering
     \includesvg[width=0.85\linewidth]{CUDA/Plot_1_RTX2060_BlockSize_Impact}
     \caption{Impact of Thread Block Size on Execution Time on a RTX 2060 Mobile}
-    \label{fig:placeholder}
+    \label{fig:block_size_impact_2060}
 \end{figure}
 % Grafico 2: Determinismo
-\begin{figure}[h!]
-    \includesvg[width=0.85\linewidth]{}
-    \caption{Execution time stability across varying impulse noise densities, demonstrating hardware determinism.}
-    \label{fig:simd_determinism}
+\begin{figure}[htbp]
+    \includesvg[width=0.85\linewidth]{CUDA/Plot_3_1A100_SIMD_Determinism.svg}
+    \caption{Execution time stability across varying impulse noise densities}
+    \label{fig:simd_determinism_1}
+\end{figure}
+
+\begin{figure}[htbp]
+    \includesvg[width=0.85\linewidth]{CUDA/Plot_3_2A100_SIMD_Determinism.svg}
+    \caption{Execution time stability across varying impulse noise densities.}
+    \label{fig:simd_determinism_2}
+\end{figure}
+
+\begin{figure}[htbp]
+    \includesvg[width=0.85\linewidth]{CUDA/Plot_3_3A100_SIMD_Determinism.svg}
+    \caption{Execution time stability across varying impulse noise densities}
+    \label{fig:simd_determinism_3}
+\end{figure}
+
+\begin{figure}[htbp]
+    \includesvg[width=0.85\linewidth]{CUDA/Plot_3_RTX2060_SIMD_Determinism.svg}
+    \caption{Execution time stability across varying impulse noise densities}
+    \label{fig:simd_determinism_2060}
 \end{figure}
 
 % Grafico 3: Comparazione Hardware A100 vs RTX
-\begin{figure}[h!]
+\begin{figure}[htbp]
     \centering
     \includesvg[width=0.85\linewidth]{CUDA/Plot_4_Hardware_Comparison_BS8}
-    \caption{Enter Caption}
-    \label{fig:placeholder}
+    \caption{Comparative hardware execution time scaling (RTX 2060 vs. Multi-GPU A100) [8 Blocks]}
+    \label{fig:Comparison_1}
 \end{figure}
 
-\begin{figure}[h!]
+\begin{figure}[htbp]
     \centering
     \includesvg[width=0.85\linewidth]{CUDA/Plot_4_Hardware_Comparison_BS16}
-    \caption{Enter Caption}
-    \label{fig:placeholder}
+    \caption{Comparative hardware execution time scaling (RTX 2060 vs. Multi-GPU A100) [16 Blocks]}
+    \label{fig:Comparison_2}
 \end{figure}
 
-\begin{figure}[h!]
+\begin{figure}[htbp]
     \includesvg[width=0.85\linewidth]{CUDA/Plot_4_Hardware_Comparison_BS32}
-    \caption{Comparative hardware execution time scaling (RTX 2060 vs. Multi-GPU A100).}
-    \label{fig:hw_comparison_32}
+    \caption{Comparative hardware execution time scaling (RTX 2060 vs. Multi-GPU A100) [32 Blocks]}
+    \label{fig:Comparison_3}
 \end{figure}
 
 % Grafico 4: PSNR Degradation
 \begin{figure}[htbp]
     \centering
-    \includesvg[width=0.85\textwidth]{}
-    \caption{Catastrophic PSNR degradation of the linear $3\times3$ filter when subjected to high-density impulse noise.}
-    \label{fig:psnr_degradation}
+    \includesvg[width=0.85\linewidth]{CUDA/Plot_2_1A100_PSNR_Degradation.svg}
+    \caption{PSNR degradation of the linear $3\times3$ filter when subjected to high-density impulse noise.}
+    \label{fig:psnr_degradation_1}
 \end{figure}
 
-% Qui puoi includere la Tabella generata in automatico dallo script Python
-% \input{statistics_table.tex}
+\begin{figure}[htbp]
+    \centering
+    \includesvg[width=0.85\linewidth]{CUDA/Plot_2_2A100_PSNR_Degradation.svg}
+    \caption{PSNR degradation of the linear $3\times3$ filter when subjected to high-density impulse noise.}
+    \label{fig:psnr_degradation_2}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includesvg[width=0.85\linewidth]{CUDA/Plot_2_3A100_PSNR_Degradation.svg}
+    \caption{PSNR degradation of the linear $3\times3$ filter when subjected to high-density impulse noise.}
+    \label{fig:psnr_degradation_3}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includesvg[width=0.85\linewidth]{CUDA/Plot_2_RTX2060_PSNR_Degradation.svg}
+    \caption{PSNR degradation of the linear $3\times3$ filter when subjected to high-density impulse noise.}
+    \label{fig:psnr_degradation_2060}
+\end{figure}
 
 
 \clearpage
@@ -321,6 +358,7 @@ Figure III.1 shows the evolution over time of the temperature in the slab.
 As can be observed, the evolution is extremely slow through the iterations, and the temperature equilibrium is far from being reached. Moreover, the chosen threshold of 0.001 for the minimum change in the system between successive iterations was never reached, even after 10,000 iterations. To determine the number of iterations required for the simulation to terminate due to the threshold condition, the maximum iteration count was increased to $30{,}000$. The results demonstrated that the threshold was reached after $29{,}275$ iterations. \\
 \begin{table}[h!]
 \centering
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{l c c c c}
 \hline
 Iteration Group & Threads & Mean (s) & Std Dev (s) & Speedup vs half threads \\
@@ -356,13 +394,14 @@ Iteration Group & Threads & Mean (s) & Std Dev (s) & Speedup vs half threads \\
 10000 iterations & 16 & 5.7209  & 0.0189 & 0.83 \\
 10000 iterations & 32 & 6.0711  & 0.0129 & 0.94 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \caption{Execution time performance and speed-up compared to half the number of threads- Simulation 1}
 \label{tab:speedup}
 \end{table}\\
 As shown in Table III.1, the execution times for all simulations decrease significantly as the number of threads is increased up to 4. A speedup of approximately 2× is observed with up to 4 threads. Increasing the number of threads to 8 does not provide any significant performance improvement, while using more than 8 threads results in performance degradation. The lack of performance improvement between 4 and 8 threads suggests that, although using 8 threads provides more parallelism in the matrix calculations, it also introduces overhead due to managing additional threads. Overall, the parallel implementation demonstrates solid scalability up to eight threads, corresponding to one thread per physical core. Beyond this point, particularly when utilizing 16 or 32 threads, performance degrades. Since only 8 hardware threads are available, increasing the number of threads beyond the number of physical cores forces multiple threads to compete for the same hardware resources, introducing contention and overhead, which leads to higher execution time.\\
 The same data are illustrated in Figure III.2, providing a visual representation of this trend.
-\begin{figure}[!h]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=1\linewidth]{OPEN_MP/Sim1Graph.png}
     \caption{Execution times vs Number of  threads}
@@ -374,7 +413,7 @@ The data analysis shows that the execution time increases proportionally with th
 
 \subsection{Simulation 2}
 In Simulation 2, the central region of the slab, corresponding to 25\% of the total area, is initialized at a temperature of $540^{\circ}$C, while the remainder of the surface is again set to $14.98^{\circ}$C. As in the previous simulation Figure III.3 shows the evolution of the diffusion through different snapshots over time.
-\begin{figure}[!h]
+\begin{figure}[htbp]
 \centering
 
 \begin{subfigure}[b]{0.17\textwidth}
@@ -409,6 +448,7 @@ A higher threshold of $0.005$ was selected compared to the previous exercise to 
 Table III.2 and Figure III.4 present the obtained data, following the format of the previous simulation. All behaviors observed in the previous simulation are reflected in these results. This includes the direct proportionality between execution time and the number of iterations, the performance improvements scaling up to 4 parallel threads, the absence of further gains with 8 threads, and the performance degradation observed when utilizing a higher number of threads.
 \begin{table}[h!]
 \centering
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{l c c c c}
 \hline
 Iteration Group & Threads & Mean (s) & Std Dev (s) & Speedup (vs prev) \\
@@ -444,15 +484,17 @@ Iteration Group & Threads & Mean (s) & Std Dev (s) & Speedup (vs prev) \\
 10000 iterations & 16 & 5.9891  & 0.0107 & 0.82 \\
 10000 iterations & 32 & 6.3382  & 0.0079 & 0.94 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \caption{Execution performance and speedup vs  thread number}
 \label{tab:speedup-prev}
 \end{table}
-\begin{figure}[!h]
+
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=1\linewidth]{OPEN_MP/Sim2_Graph.png}
     \caption{Execution times vs Number of  threads- Simulation 2}
-    \label{fig:placeholder}
+    \label{fig:Sim2}
 \end{figure}
 
 \section*{CONCLUSION}
