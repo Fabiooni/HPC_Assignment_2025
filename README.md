@@ -8,8 +8,8 @@
 ## Requirement
 ### FileSystem
 the three asignment was develop using two distinct opereting sistem:
-Unix filesistem: exercise 1 and 3 (pusherd directly from HPC)
-Windows filesistem: exercise 2 (it was tested on local GPU hardwaew)
+- Unix filesistem: exercise 1 and 3 (pusherd directly from HPC)
+- Windows filesistem: exercise 2 (it was tested on local GPU hardwaew)
 ### compiler
 MPI version: `3.3.1`
 CUDA: `CUDA 12`
