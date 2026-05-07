@@ -1,13 +1,11 @@
 @echo off
 echo === COMPILING CUDA FILTER ON WINDOWS (RTX 2060) ===
 
-:: 1. IMPOSTA LA DIRECTORY DI OPENCV (Punta alla cartella 'build')
-:: Esempio: C:\opencv\build
+:: IMPOSTA LA DIRECTORY DI OPENCV (Punta alla cartella 'build')
 set OPENCV_DIR=C:\Program Files\Opencv\build
 
-:: 2. IMPOSTA IL NOME DELLA LIBRERIA OPENCV (Senza .lib alla fine)
+:: IMPOSTA IL NOME DELLA LIBRERIA OPENCV (Senza .lib alla fine)
 :: Controlla in %OPENCV_DIR%\x64\vc16\lib come si chiama esattamente.
-:: Esempio per OpenCV 4.8.0: opencv_world480
 set OPENCV_LIB=opencv_world4110
 
 echo OpenCV Directory: %OPENCV_DIR%

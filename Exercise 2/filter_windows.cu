@@ -112,7 +112,6 @@ int main(int argc, char* argv[]) {
     }
 
     // --- ESTRAZIONE NOME FILE ---
-    // Da "./images/4K_50.jpg" estraiamo "4K_50"
     size_t lastSlash = noisyFile.find_last_of("/\\");
     string nameWithExt = (lastSlash != string::npos) ? noisyFile.substr(lastSlash + 1) : noisyFile;
     size_t lastDot = nameWithExt.find_last_of(".");
@@ -185,7 +184,7 @@ int main(int argc, char* argv[]) {
 
     // --- SALVATAGGIO IMMAGINE (Solo se flag = 1) ---
     if (saveOutput == 1) {
-        // Formato richiesto: 4K_50_32_out.png
+        // Formato richiesto: ad esempio 4K_50_32_out.png
         string outputName = baseName + "_" + to_string(blockSize) + "_out.png";
         imwrite(outputName, outputImg);
         cout << "Saved result to: " << outputName << endl;

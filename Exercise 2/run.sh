@@ -57,8 +57,7 @@ for img in $images; do
     echo "============================================="
     echo " PROCESSING IMAGE: $img"
     
-    # Estrazione del nome originale (Ground Truth) per il calcolo del PSNR
-    # Se il file è "4K_50.jpg", estrae "4K". Se è "16K.jpg", estrae "16K".
+    # Estrazione del nome originale per il calcolo del PSNR
     BASENAME=$(basename "$img")
     PREFIX=$(echo "$BASENAME" | cut -d'_' -f1 | cut -d'.' -f1)
     

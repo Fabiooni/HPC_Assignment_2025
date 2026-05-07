@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1778078640.63433 "c:/Users/fabio/Documents/HPC_Assignment_2025/Report/main.tex" "main.pdf" "main" 1778078649.10228 0
+["pdflatex"] 1778142408.94387 "c:/Users/fabio/Documents/HPC_Assignment_2025/Report/main.tex" "main.pdf" "main" 1778142411.21434 0
   "CUDA/Plot_1_1A100_BlockSize_Impact.svg" 1778067480 58202 83db90fde5f3d57145767d4d573ce11b ""
   "CUDA/Plot_1_2A100_BlockSize_Impact.svg" 1778067480 59242 707188cb8d8d173c000106c4bc59127e ""
   "CUDA/Plot_1_3A100_BlockSize_Impact.svg" 1778067480 59231 97cc6d180b4181028df3927583312b50 ""
@@ -26,7 +26,7 @@
   "OPEN_MP/9000.png" 1778067480 57922 f313022538115fa94740136d1553b217 ""
   "OPEN_MP/Sim1Graph.png" 1778067480 54960 6a14a2951ae56ee9bf2a6c7dd9d9bee5 ""
   "OPEN_MP/Sim2_Graph.png" 1778067480 55322 e1ae313afba50a50a0e28757d436e12a ""
-  "c:/Users/fabio/Documents/HPC_Assignment_2025/Report/main.tex" 1778078637 30846 19c81628e07e6e870ddec844f0a38a94 ""
+  "c:/Users/fabio/Documents/HPC_Assignment_2025/Report/main.tex" 1778142408 31122 10956dfd0c8626846d7e41aa31880cd2 ""
   "c:/texlive/2025/texmf-dist/fonts/enc/dvips/base/8r.enc" 1747643202 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "c:/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1747643792 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "c:/texlive/2025/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1747642746 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -174,9 +174,9 @@
   "c:/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1747649513 5569470 f263a82cf6bb394f5bc87b63f38b78df ""
   "c:/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt" 1747649848 3568816 b9fbb1715e47f6e1691e0c38101299e9 ""
   "c:/texlive/2025/texmf.cnf" 1747649476 713 e69b156964470283e0530f5060668171 ""
-  "main.aux" 1778078648 8957 f6e5fb742f7afda5654423d3210609de "pdflatex"
-  "main.out" 1778078648 537 65279320595d8d1be44fbe29593309ed "pdflatex"
-  "main.tex" 1778078637 30846 19c81628e07e6e870ddec844f0a38a94 ""
+  "main.aux" 1778142410 8957 77c37ad6eeba9f5a59c599e1e9fbc72f "pdflatex"
+  "main.out" 1778142410 537 65279320595d8d1be44fbe29593309ed "pdflatex"
+  "main.tex" 1778142408 31122 10956dfd0c8626846d7e41aa31880cd2 ""
   "svg-inkscape/Plot_1_1A100_BlockSize_Impact_svg-tex.pdf" 1778075730 49053 f2d689212014de2fb4f1fc12b7fbdecf ""
   "svg-inkscape/Plot_1_1A100_BlockSize_Impact_svg-tex.pdf_tex" 1778075730 2127 9b2418be8ecddfd8be7f9a8870109f6f ""
   "svg-inkscape/Plot_1_2A100_BlockSize_Impact_svg-tex.pdf" 1778075732 51008 872d03ffd91be601113ffb471ab0050a ""

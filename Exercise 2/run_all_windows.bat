@@ -16,13 +16,11 @@ if not exist "filter_windows.exe" (
     exit /b
 )
 
-REM Ciclo su TUTTE le immagini JPG e PNG (rimosso il vincolo dell'underscore)
+REM Ciclo su TUTTE le immagini JPG o PNG
 for %%F in (%IMAGES_DIR%\*.jpg %IMAGES_DIR%\*.png) do (
     set "NOISY_IMG=%%F"
     
     REM Estrazione logica del prefisso per trovare l'originale
-    REM Se il file è "4K.jpg", il prefisso diventa "4K"
-    REM Se il file è "4K_50.jpg", il prefisso diventa "4K"
     for /f "tokens=1 delims=_" %%P in ("%%~nF") do (
         set "PREFIX=%%P"
     )
