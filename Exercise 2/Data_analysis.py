@@ -7,9 +7,7 @@ import glob
 import re
 import os
 
-# ==========================================
-# 1. SETUP E RICERCA FILE AUTOMATICA
-# ==========================================
+# SETUP E RICERCA FILE AUTOMATICA
 mia_palette_ieee = ['#2df788', '#fffb1f', '#16c8d9', '#401fff', '#CCB974']
 
 def get_resolution(name):
@@ -24,10 +22,10 @@ def get_noise_level(name):
     elif '_90' in name: return '90%'
     return 'Original'
 
-# Cerchiamo i file del cluster
+# Cerco i file del cluster
 csv_files = glob.glob('execution_times_*_GPU.csv')
 
-# Aggiungiamo il file della RTX se presente nella cartella
+# Aggiungo il file della RTX se presente nella cartella
 if os.path.exists('execution_times_RTX_2060.csv'):
     csv_files.append('execution_times_RTX_2060.csv')
 
@@ -37,11 +35,8 @@ if not csv_files:
 
 all_data = []
 
-# ==========================================
-# 2. CICLO SU OGNI FILE TROVATO
-# ==========================================
+# CICLO SU OGNI FILE TROVATO
 for file in csv_files:
-    # Logica di Parsing Dinamica per Cluster vs Windows
     if 'RTX_2060' in file:
         hw_label = 'RTX 2060 Mobile'
         file_pref = 'RTX2060'
@@ -66,9 +61,8 @@ for file in csv_files:
     
     all_data.append(df)
     
-    # ------------------------------------------
     # GRAFICO 1: TEMPO DI ESECUZIONE vs BLOCK SIZE
-    # ------------------------------------------
+    
     time_stats = df.groupby(['Resolution', 'BlockSize'])['Time_ms'].mean().unstack()
     time_stats = time_stats.reindex(['4K', '8K', '16K'])
     
@@ -89,9 +83,8 @@ for file in csv_files:
     plt.savefig(f'Plot_1_{file_pref}_BlockSize_Impact.svg', format='svg', bbox_inches='tight')
     plt.close()
 
-    # ------------------------------------------
     # GRAFICO 2: DEGRADO DEL PSNR vs RUMORE
-    # ------------------------------------------
+    
     psnr_stats = df.groupby(['Resolution', 'Noise'])['PSNR_dB'].mean().unstack()
     psnr_stats = psnr_stats[['Original', '50%', '75%', '90%']]
     psnr_stats = psnr_stats.reindex(['4K', '8K', '16K'])
@@ -113,9 +106,8 @@ for file in csv_files:
     plt.savefig(f'Plot_2_{file_pref}_PSNR_Degradation.svg', format='svg', bbox_inches='tight')
     plt.close()
 
-    # ------------------------------------------
     # GRAFICO 3: DETERMINISMO HARDWARE
-    # ------------------------------------------
+    
     df_bs32 = df[df['BlockSize'] == 32]
     if not df_bs32.empty:
         noise_time_stats = df_bs32.groupby(['Resolution', 'Noise'])['Time_ms'].agg(['mean', 'std']).reset_index()
@@ -142,9 +134,8 @@ for file in csv_files:
             plt.savefig(f'Plot_3_{file_pref}_SIMD_Determinism.svg', format='svg', bbox_inches='tight')
             plt.close()
 
-# ==========================================
-# 3. GRAFICI 4: SCALABILITÀ HARDWARE (A100 vs RTX)
-# ==========================================
+# GRAFICI 4: SCALABILITÀ HARDWARE (A100 vs RTX)
+
 if len(all_data) > 0:
     print("\n--- Generazione Grafici Comparativi Hardware ---")
     df_all = pd.concat(all_data, ignore_index=True)
@@ -181,9 +172,6 @@ if len(all_data) > 0:
         plt.savefig(f'Plot_4_Hardware_Comparison_BS{bs}.svg', format='svg', bbox_inches='tight')
         plt.close()
 
-# ==========================================
-# 4. EXPORT STATISTICO PER LATEX
-# ==========================================
     print("\n--- Generazione file LaTeX (statistics_table.tex) ---")
     
     df_report = df_all[df_all['BlockSize'] == 32]
@@ -230,6 +218,4 @@ if len(all_data) > 0:
         f.write("        \\bottomrule\n")
         f.write("    \\end{tabular}\n")
         f.write("\\end{table}\n")
-
-    print(f"File '{tex_filename}' generato con successo!")
     print("Analisi completata.")

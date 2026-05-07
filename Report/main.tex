@@ -125,7 +125,7 @@ if (ty == bh - 1) s_data[bh + 1][tx + 1] = input[min(max(y + 1, 0), height - 1) 
 __syncthreads();
 \end{lstlisting}
 
-Following the \texttt{\_\_syncthreads()} barrier to ensure memory consistency, the convolution math is executed entirely out of the L1/Shared Memory space, reducing global memory accesses by nearly a factor of 9 and drastically increasing the effective memory bandwidth.
+Following the \texttt{\_\_syncthreads()} barrier to ensure memory consistency, the convolution math is executed entirely out of the L1/Shared Memory space, reducing global memory accesses. It guarantees that all collaborative fetches are completed and the Shared Memory buffer is fully populated before any thread begins the convolution math, preventing race conditions and corrupted pixel reads.
 
 \subsection*{Constant Memory for Stencil Weights}
 The stencil elements of filter $W$ are fixed and identical for every thread in the computational grid. Allocating these 9 floating-point values in standard global memory or passing them dynamically would waste precious registers or cache lines. 
@@ -141,7 +141,7 @@ __constant__ float d_W[9] = {
 \end{lstlisting}
 
 \subsection*{Instruction-Level Parallelism and Loop Unrolling}
-To further maximize the Arithmetic Logic Unit (ALU) utilization and minimize control-flow overhead a hardcoded $3\times3$ execution path was chosen. The nested \texttt{for} loops traditionally used to iterate over the kernel coordinates were aggressively flattened using Loop Unrolling, as demonstrated in Listing \ref{lst:unroll}. This optimization completely eliminates branch divergence and loop counter increments, translating the convolution into a straight-line sequence of instructions. 
+To further maximize the Arithmetic Logic Unit (ALU) utilization and minimize control-flow overhead a hardcoded $3\times3$ execution path was chosen. The nested \texttt{for} loops traditionally used to iterate over the kernel coordinates were aggressively flattened using Loop Unrolling, as demonstrated in Listing \ref{lst:unroll}. This optimization completely eliminates branch divergence and loop counter increments. Consequently, the CUDA cores remain fully operational without suffering instruction stalls, translating the mathematical convolution into a pure, uninterrupted arithmetic pipeline. 
 
 \begin{lstlisting}[style=cppstyle, caption={Explicit loop unrolling for the 3x3 convolution kernel.}, label={lst:unroll}]
 if (x < width && y < height) {
@@ -167,7 +167,7 @@ This consistency is a direct consequence of the SIMT execution model. Unlike a C
 To further investigate the architectural constraints, a comparative benchmark was conducted between a datacenter accelerator (NVIDIA A100, HBM2 memory) and a consumer-grade GPU (NVIDIA RTX 2060 Mobile, GDDR6 memory). The relative speed-up $S$ achieved by scaling the hardware is mathematically defined by Amdahl's framework as:
 $$ S = \frac{T_{\text{baseline}}}{T_{\text{target}}} $$
 
-The execution on the RTX 2060 (GDDR6 @ 336 GB/s) required an average of $220$~ms for a 16K resolution image, compared to the $76.48$~ms achieved by the A100 (HBM2 @ 1555 GB/s). The ratio between the execution times ($\sim2.8\times$) scales in a directly proportional manner to the ratio of their theoretical memory bandwidths ($\sim4.6\times$). This correlation, supported by the data in Table \ref{tab:hw_scalability} and Figure \ref{fig:Comparison_1}, definitively confirms the Memory-Bound nature of the 2D spatial convolution: the computational throughput is severely limited by the memory fetch latency, preventing the CUDA cores from saturating their Arithmetic Logic Unit (ALU) capacity. Similarly, distributing the workload across multiple A100 GPUs yielded a negative speed-up ($S < 1$), exposing the communication bottleneck of the PCIe bus overhead.
+The execution on the RTX 2060 (GDDR6 @ 336 GB/s) required an average of $220$~ms for a 16K resolution image, compared to the $76.48$~ms achieved by the A100 (HBM2 @ 1555 GB/s). The ratio between the execution times ($\sim2.8\times$) scales in a directly proportional manner to the ratio of their theoretical memory bandwidths ($\sim4.6\times$). This correlation, supported by the data in Table \ref{tab:hw_scalability} and Figure \ref{fig:Comparison_1}, definitively confirms the Memory-Bound nature of the 2D spatial convolution: the computational throughput is severely limited by the memory fetch latency, preventing the CUDA cores from saturating their Arithmetic Logic Unit (ALU) capacity. Similarly, a crucial finding in the multi-GPU analysis is the observation of a negative speedup ($S < 1$) when scaling from one to three A100 gpus. The arithmetic intensity is relatively low; consequently, the time saved by distributing pixels across multiple SMs is completely offset by the overhead of partitioning the image buffer, managing memory copies via the PCIe/NVLink bus, and synchronizing the sub-tiles for the final composition.
 
 \section*{Obtained Data}
 \subsection*{PSNR Degradation: Failure of Linear Filtering on Impulse Noise}
@@ -176,8 +176,7 @@ The effectiveness of the assigned $W$ filter was quantitatively evaluated using 
 
 From a signal processing perspective, this behaviour is mathematically expected. The filter $W$ acts as a low-pass spatial filter (a weighted local average). Impulse noise introduces extremely high spatial frequencies, mathematically modelled as Dirac delta functions in the spatial domain. A linear operator like filter $W$ cannot reject these impulses; it merely computes their convolution, effectively distributing the noise energy over the adjacent pixels within its $3\times3$ support region. Consequently, the high-amplitude noise is not eliminated but rather spatially smeared, resulting in a blurred image with pervasive chromatic aberrations. 
 
-This analysis strictly validates that while linear low-pass filters are effective against Gaussian (thermal) noise, non-linear rank-order filters (such as the Median filter) are mandatory to successfully reject non-additive impulse noise without degrading the high-frequency components (edges) of the underlying signal.
-
+This analysis strictly validates that while linear low-pass filters are effective against Gaussian noise, non-linear filters (such as the Median filter) are mandatory to successfully process the images and get a satisfactory result.
 
 %\clearpage
 \section*{Appendix: Figures and Data Tables}
