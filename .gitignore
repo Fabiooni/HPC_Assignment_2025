@@ -4,3 +4,10 @@
 *.exp
 *.lib
 *.dll
+*.aux
+*.log
+*.fls
+*.fdb_latekmk
+*.out
+*.synctex.gz
+*.pdf_tex
