@@ -125,7 +125,7 @@ if (ty == bh - 1) s_data[bh + 1][tx + 1] = input[min(max(y + 1, 0), height - 1) 
 __syncthreads();
 \end{lstlisting}
 
-Following the \texttt{\_\_syncthreads()} barrier to ensure memory consistency, the convolution math is executed entirely out of the L1/Shared Memory space, reducing global memory accesses by nearly a factor of 9 and drastically increasing the effective memory bandwidth.
+Following the \texttt{\_\_syncthreads()} barrier to ensure memory consistency, the convolution math is executed entirely out of the L1/Shared Memory space, reducing global memory accesses. It guarantees that all collaborative fetches are completed and the Shared Memory buffer is fully populated before any thread begins the convolution math, preventing race conditions and corrupted pixel reads.
 
 \subsection*{Constant Memory for Stencil Weights}
 The stencil elements of filter $W$ are fixed and identical for every thread in the computational grid. Allocating these 9 floating-point values in standard global memory or passing them dynamically would waste precious registers or cache lines. 
@@ -141,7 +141,7 @@ __constant__ float d_W[9] = {
 \end{lstlisting}
 
 \subsection*{Instruction-Level Parallelism and Loop Unrolling}
-To further maximize the Arithmetic Logic Unit (ALU) utilization and minimize control-flow overhead a hardcoded $3\times3$ execution path was chosen. The nested \texttt{for} loops traditionally used to iterate over the kernel coordinates were aggressively flattened using Loop Unrolling, as demonstrated in Listing \ref{lst:unroll}. This optimization completely eliminates branch divergence and loop counter increments, translating the convolution into a straight-line sequence of instructions. 
+To further maximize the Arithmetic Logic Unit (ALU) utilization and minimize control-flow overhead a hardcoded $3\times3$ execution path was chosen. The nested \texttt{for} loops traditionally used to iterate over the kernel coordinates were aggressively flattened using Loop Unrolling, as demonstrated in Listing \ref{lst:unroll}. This optimization completely eliminates branch divergence and loop counter increments. Consequently, the CUDA cores remain fully operational without suffering instruction stalls, translating the mathematical convolution into a pure, uninterrupted arithmetic pipeline. 
 
 \begin{lstlisting}[style=cppstyle, caption={Explicit loop unrolling for the 3x3 convolution kernel.}, label={lst:unroll}]
 if (x < width && y < height) {
