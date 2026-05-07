@@ -176,8 +176,7 @@ The effectiveness of the assigned $W$ filter was quantitatively evaluated using 
 
 From a signal processing perspective, this behaviour is mathematically expected. The filter $W$ acts as a low-pass spatial filter (a weighted local average). Impulse noise introduces extremely high spatial frequencies, mathematically modelled as Dirac delta functions in the spatial domain. A linear operator like filter $W$ cannot reject these impulses; it merely computes their convolution, effectively distributing the noise energy over the adjacent pixels within its $3\times3$ support region. Consequently, the high-amplitude noise is not eliminated but rather spatially smeared, resulting in a blurred image with pervasive chromatic aberrations. 
 
-This analysis strictly validates that while linear low-pass filters are effective against Gaussian (thermal) noise, non-linear rank-order filters (such as the Median filter) are mandatory to successfully reject non-additive impulse noise without degrading the high-frequency components (edges) of the underlying signal.
-
+This analysis strictly validates that while linear low-pass filters are effective against Gaussian noise, non-linear filters (such as the Median filter) are mandatory to successfully process the images and get a satisfactory result.
 
 %\clearpage
 \section*{Appendix: Figures and Data Tables}
