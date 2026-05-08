@@ -38,7 +38,7 @@ To compile and run the programs, the following tools are required:
 ## Quick Start & Compilation Guide.
 
 ### Exercise 1: MPI (Systolic array for matrix multiplication)
-[cite_start]This exercise implements a systolic array structure to compute matrix multiplication across distributed nodes[cite: 81]. 
+[cite_start]This exercise implements a systolic array structure to compute matrix multiplication across distributed nodes. 
 To compile the generator, build the MPI executable, generate the initial input matrices, and submit the SLURM job to the `edu_sapphire` partition:
 ```bash
 cd "Exercise 1"
@@ -70,8 +70,7 @@ Compile.bat
 run_all_windows.bat
 ```
 ### Exercise 3: OpenMP (Heat Diffusion Simulation)
-This exercise simulates heat diffusion on a 1,024x1,024 metal plate using OpenMP.
-To compile and run the simulation on the cluster:
+
 ``` bash
 cd "Exercise 3"
 # Submit the SLURM job (loads gcc/12.4.0, compiles with OpenMP, and runs the simulation)
