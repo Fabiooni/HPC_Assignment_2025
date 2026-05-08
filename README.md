@@ -4,7 +4,7 @@ This repository contains the source code, final report, and data analysis for th
 
 ### Authors:
 - F. Garrone (S349449)
-- L. Lobtutto (S346285)
+- L. Lo Brutto (S346285)
 - A. Ruggieri (S341930)
 
 ---
