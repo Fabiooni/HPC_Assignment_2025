@@ -88,25 +88,27 @@ To begin our analysis, we observe the scalability results, which reveal a non-li
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\linewidth]{thread_scalability_500.png}
+    \includegraphics[width=0.85\linewidth]{MPI/thread_scalability_500.png}
     \caption{Average execution time as a function of threads per MPI task ($500 \times 500$ matrix).}
     \label{fig:thread_scalability}
 \end{figure}
 
-As shown in Figure \ref{fig:thread_scalability}, the performance generally follows the trend predicted by Amdahl's Law: increasing the number of threads reduces the execution time until a plateau is reached (around 6-8 threads). However, a significant anomaly is observed in the transition from **2 to 3 threads**, where the execution time drops abruptly from $\sim 0.0078$s to $\sim 0.0037$s—a reduction of over $50\%$ for only a $33\%$ increase in raw processing units.
+As shown in Figure \ref{fig:thread_scalability}, the execution time initially follows a standard scaling trend, with significant performance gains moving from 1 to 4 threads. However, the scalability curve exhibits two noteworthy phenomena: a performance regression at **5 threads** and a subsequent plateau starting from **6 threads**.
 
-This "jump" suggests a transition from a software-bound bottleneck to a hardware-optimized state. In the context of the **Intel Xeon Sapphire Rapids** architecture, this behavior can be attributed to:
+The "hump" observed at 5 threads (where execution time rises to $\sim 0.0051$s from the $\sim 0.0048$s of the 4-thread configuration) represents a classic case of parallel overhead or hardware contention. In the context of the **Intel Xeon Sapphire Rapids** architecture, this behavior can be attributed to:
+
 \begin{itemize}
-    \item \textbf{Cache Locality and Tiling}: Sapphire Rapids utilizes a multi-die (tile-based) architecture. With 3 threads, the sub-blocks of the $500 \times 500$ matrix might reach an optimal size that fits entirely within the L2 or L3 cache slices associated with the active cores, drastically reducing memory latency.
-    \item \textbf{Memory Controllers and Bandwidth}: The transition to 3 threads may trigger a more efficient use of the integrated Memory Controllers (iMCs), especially if the workload distribution better aligns with the mesh interconnect topology of the Sapphire Rapids socket.
-    \item \textbf{AVX-512 and AMX Utilization}: If the implementation utilizes Intel Advanced Matrix Extensions (AMX), the 3-thread configuration might reach the critical threshold for hardware acceleration that was underutilized with only 2 threads.
+    \item \textbf{Non-Optimal Workload Distribution}: Since the matrix dimension ($500 \times 500$) and the Cannon's algorithm sub-blocks are likely power-of-two or multiples of 4, distributing this workload across 5 threads creates an uneven decomposition. This leads to load imbalance where some threads idle while others finish their computation.
+    \item \textbf{Cache and Mesh Interconnect Contention}: Sapphire Rapids uses a mesh topology to connect cores and cache slices. Moving from 4 to 5 threads may involve crossing a tile boundary or a different mesh row, increasing the latency for cache coherency traffic (L3 RFO - Request For Ownership) and snoop filter lookups.
+    \item \textbf{Resource Oversubscription}: If the MPI task is pinned to a specific NUMA node or a set of cores sharing execution resources (like ALUs or AVX-512 units), the 5th thread might be competing for the same physical resources, negating the benefits of additional parallelism.
 \end{itemize}
 
+Beyond 6 threads, the system reaches a scaling limit where the execution time stabilizes around $0.0035$s. At this stage, the communication overhead of the MPI exchange phases and the overhead of managing the OpenMP thread pool outweigh the computational speedup, confirming the practical limits defined by Amdahl's Law for this specific matrix size.
 \subsection*{Matrix Dimension Scalability}
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\linewidth]{matrix_dimension_comparison.png}
+    \includegraphics[width=0.85\linewidth]{MPI/matrix_dimension_comparison.png}
     \caption{Execution time comparison across different matrix dimensions ($N \times N$) using 4 OpenMP threads.}
     \label{fig:matrix_comparison}
 \end{figure}
