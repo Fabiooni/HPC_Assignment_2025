@@ -80,10 +80,31 @@ This report presents the implementation and analysis of three high-performance c
  OpenMp, MPI, CUDA, threads.
 \end{IEEEkeywords}
 
-\section{MPI}
+\section{MPI Implementation}
+
 \section*{Introduction}
-This Exercise show how CPU based cluster work using multiple porcesses and thread,  
+This exercise demonstrates the implementation of parallel matrix multiplication on a CPU-based cluster. The solution adopts a hybrid computing model, combining MPI (Message Passing Interface) for distributed memory management across multiple processes and OpenMP for multi-threaded local computation within ciascun process. Specifically, the code implements Cannon's Algorithm, which is optimized for mesh-connected parallel processors.
+
 \section*{Resolution Strategy}
+The resolution strategy follows two levels of implementation and management:
+
+\subsection*{Distribution Strategy}
+The system reads, scatters, and recombines data across different nodes and processes. Since these tasks cannot be fully executed in parallel, we distinguish three algorithm phases:
+
+\begin{enumerate}
+    \item \textbf{Matrix Reading}: In this step, all processes wait while the root process (rank 0) reads the two input matrices from the filesystem.
+    \item \textbf{Scattering and Computation}: Using the MPI Cartesian communicator, the root sends the sub-matrices to the first row and column. Subsequently, all nodes perform local computations and shift their input matrices to Cartesian neighbors (horizontal and vertical shifts, no diagonal communication).
+    \item \textbf{Recombination}: Using Cartesian coordinates, the root process receives and stores the sub-matrices correctly, ensuring the final matrix is assembled properly even if data arrives out of order.
+\end{enumerate}
+
+To avoid race conditions and redundant I/O operations, only the root process (rank 0) accesses the filesystem. Once loaded, the root uses \texttt{MPI\_Scatterv} to distribute the appropriate sub-blocks to each process in the Cartesian grid.
+
+\subsection*{Parallelization Strategy}
+After data scattering, each process works independently. Since each tile of the output matrix is computed locally, OpenMP is used to parallelize the multiplication. The local matrix is divided into $n$ portions; each thread executes the core multiplication one tile at a time. For each step $k$ of Cannon's algorithm, threads compute the partial result using:
+
+$$ C_{i,j}^{(k)} = C_{i,j}^{(k-1)} + (A_{i,j}^{(k)} \times B_{i,j}^{(k)}) $$
+
+\noindent Where $A_{i,j}^{(k)}$ and $B_{i,j}^{(k)}$ represent the local sub-blocks held by process $(i,j)$ after the $k$-th shift.
 
 \section*{Obtained Data Analysis}
 
