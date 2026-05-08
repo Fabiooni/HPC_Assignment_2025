@@ -80,10 +80,10 @@ This report presents the implementation and analysis of three high-performance c
  OpenMp, MPI, CUDA, threads.
 \end{IEEEkeywords}
 
-\section{MPI Implementation}
+\section{MPI}
 
 \section*{Introduction}
-This exercise demonstrates the implementation of parallel matrix multiplication on a CPU-based cluster. The solution adopts a hybrid computing model, combining MPI (Message Passing Interface) for distributed memory management across multiple processes and OpenMP for multi-threaded local computation within ciascun process. Specifically, the code implements Cannon's Algorithm, which is optimized for mesh-connected parallel processors.
+This exercise demonstrates the implementation of parallel matrix multiplication on a CPU-based cluster (with more the one node). The solution adopts a hybrid computing model, combining MPI (Message Passing Interface) for distributed memory management across multiple processes and OpenMP for multi-threaded local computation within ciascun process. Specifically, the code implements Systolic Array Algorithm, which is optimized for mesh-connected parallel processors.
 
 \section*{Resolution Strategy}
 The resolution strategy follows two levels of implementation and management:
@@ -100,7 +100,7 @@ The system reads, scatters, and recombines data across different nodes and proce
 To avoid race conditions and redundant I/O operations, only the root process (rank 0) accesses the filesystem. Once loaded, the root uses \texttt{MPI\_Scatterv} to distribute the appropriate sub-blocks to each process in the Cartesian grid.
 
 \subsection*{Parallelization Strategy}
-After data scattering, each process works independently. Since each tile of the output matrix is computed locally, OpenMP is used to parallelize the multiplication. The local matrix is divided into $n$ portions; each thread executes the core multiplication one tile at a time. For each step $k$ of Cannon's algorithm, threads compute the partial result using:
+After data scattering, each process works independently. Since each tile of the output matrix is computed locally, OpenMP is used to parallelize the multiplication. The local matrix is divided into $n$ portions; each thread executes the core multiplication one tile at a time. For each step $k$ of Systolic Array algorithm, threads compute the partial result using:
 
 $$ C_{i,j}^{(k)} = C_{i,j}^{(k-1)} + (A_{i,j}^{(k)} \times B_{i,j}^{(k)}) $$
 
@@ -142,7 +142,7 @@ Figure \ref{fig:matrix_comparison} illustrates how the system handles increasing
     \item Moving from $N=500$ ($0.0044$s) to $N=1000$ ($0.0399$s) results in an increase of factor $\approx 9.06 \times$.
     \item Moving from $N=1000$ to $N=2000$ ($0.3256$s) results in an increase of factor $\approx 8.16 \times$.
 \end{itemize}
-The theoretical scaling factor for doubling $N$ is $2^3 = 8$. The slight overhead observed at $N=1000$ is likely due to the increased communication volume in Cannon's algorithm, as the MPI message sizes for sub-block swaps grow quadratically ($N^2$) with the matrix dimension.
+The theoretical scaling factor for doubling $N$ is $2^3 = 8$. The slight overhead observed at $N=1000$ is likely due to the increased communication volume in Systolic Array algorithm, as the MPI message sizes for sub-block swaps grow quadratically ($N^2$) with the matrix dimension.
 
 \section{CUDA}
 \section*{Introduction}
