@@ -2,6 +2,7 @@
 *.csv
 *.exe
 *.exp
+*.err
 *.lib
 *.dll
 *.aux
