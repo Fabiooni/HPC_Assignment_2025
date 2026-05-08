@@ -35,7 +35,21 @@ To compile and run the programs, the following tools are required:
 
 ---
 
-## Quick Start & Compilation Guide
+## Quick Start & Compilation Guide.
+
+### Exercise 1: MPI (Systolic array for matrix multiplication)
+[cite_start]This exercise implements a systolic array structure to compute matrix multiplication across distributed nodes[cite: 81]. 
+To compile the generator, build the MPI executable, generate the initial input matrices, and submit the SLURM job to the `edu_sapphire` partition:
+```bash
+cd "Exercise 1"
+# Execute the wrapper script to compile and submit the job
+./run_experiments_500.sh
+./run_experiments_1000.sh
+./run_experiments_2000.sh
+# the diff script run 500x500 for thread 1,2,3,4,5,6,7 and 8
+./run_experiments_500_dif.sh
+python3 data_presentation.py 
+```
 
 ### Exercise 2: CUDA (Multi-dimensional data processing)
 **Data Note:** Due to GitHub file size limits, the raw 4K, 8K, and 16K test images (including `pexels-christian-heitz.jpg`) are not tracked in this repository. Ensure your test images are available locally before running the scripts.
@@ -54,4 +68,22 @@ cd "Exercise 2"
 Compile.bat
 # Run the batch script to process the images
 run_all_windows.bat
+```
+### Exercise 3: OpenMP (Heat Diffusion Simulation)
+This exercise simulates heat diffusion on a 1,024x1,024 metal plate using OpenMP.
+To compile and run the simulation on the cluster:
+``` bash
+cd "Exercise 3"
+# Submit the SLURM job (loads gcc/12.4.0, compiles with OpenMP, and runs the simulation)
+# goroup A for half hot hal cold
+sbatch run_Ex3_a_1000.sbatch
+sbatch run_Ex3_a_2000.sbatch
+sbatch run_Ex3_a_3000.sbatch
+sbatch run_Ex3_a_5000.sbatch
+# group B for hot center and cold surround
+sbatch run_Ex3_b_1000.sbatch
+sbatch run_Ex3_b_2000.sbatch
+sbatch run_Ex3_b_3000.sbatch
+sbatch run_Ex3_b_5000.sbatch
+
 ```
