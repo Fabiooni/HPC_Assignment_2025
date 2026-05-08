@@ -80,11 +80,43 @@ This report presents the implementation and analysis of three high-performance c
  OpenMp, MPI, CUDA, threads.
 \end{IEEEkeywords}
 
-\section{MPI}
-\section*{Introduction}
-This Exercise show how CPU based cluster work using multiple porcesses and thread,  
-\section*{Resolution Strategy}
-\section*{Obtained data}
+\section*{Obtained Data Analysis}
+
+To begin our analysis, we observe the scalability results, which reveal a non-linear relationship between computational resources and execution time.
+
+\subsection*{Thread Scalability and Hardware Impact}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\linewidth]{thread_scalability_500.png}
+    \caption{Average execution time as a function of threads per MPI task ($500 \times 500$ matrix).}
+    \label{fig:thread_scalability}
+\end{figure}
+
+As shown in Figure \ref{fig:thread_scalability}, the performance generally follows the trend predicted by Amdahl's Law: increasing the number of threads reduces the execution time until a plateau is reached (around 6-8 threads). However, a significant anomaly is observed in the transition from **2 to 3 threads**, where the execution time drops abruptly from $\sim 0.0078$s to $\sim 0.0037$s—a reduction of over $50\%$ for only a $33\%$ increase in raw processing units.
+
+This "jump" suggests a transition from a software-bound bottleneck to a hardware-optimized state. In the context of the **Intel Xeon Sapphire Rapids** architecture, this behavior can be attributed to:
+\begin{itemize}
+    \item \textbf{Cache Locality and Tiling}: Sapphire Rapids utilizes a multi-die (tile-based) architecture. With 3 threads, the sub-blocks of the $500 \times 500$ matrix might reach an optimal size that fits entirely within the L2 or L3 cache slices associated with the active cores, drastically reducing memory latency.
+    \item \textbf{Memory Controllers and Bandwidth}: The transition to 3 threads may trigger a more efficient use of the integrated Memory Controllers (iMCs), especially if the workload distribution better aligns with the mesh interconnect topology of the Sapphire Rapids socket.
+    \item \textbf{AVX-512 and AMX Utilization}: If the implementation utilizes Intel Advanced Matrix Extensions (AMX), the 3-thread configuration might reach the critical threshold for hardware acceleration that was underutilized with only 2 threads.
+\end{itemize}
+
+\subsection*{Matrix Dimension Scalability}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\linewidth]{matrix_dimension_comparison.png}
+    \caption{Execution time comparison across different matrix dimensions ($N \times N$) using 4 OpenMP threads.}
+    \label{fig:matrix_comparison}
+\end{figure}
+
+Figure \ref{fig:matrix_comparison} illustrates how the system handles increasing workloads. Matrix multiplication follows a theoretical complexity of $O(N^3)$. Our empirical data aligns closely with this:
+\begin{itemize}
+    \item Moving from $N=500$ ($0.0044$s) to $N=1000$ ($0.0399$s) results in an increase of factor $\approx 9.06 \times$.
+    \item Moving from $N=1000$ to $N=2000$ ($0.3256$s) results in an increase of factor $\approx 8.16 \times$.
+\end{itemize}
+The theoretical scaling factor for doubling $N$ is $2^3 = 8$. The slight overhead observed at $N=1000$ is likely due to the increased communication volume in Cannon's algorithm, as the MPI message sizes for sub-block swaps grow quadratically ($N^2$) with the matrix dimension.
 
 \section{CUDA}
 \section*{Introduction}
