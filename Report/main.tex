@@ -119,13 +119,21 @@ To begin our analysis, we observe the scalability results, which reveal a non-li
     \label{fig:thread_scalability}
 \end{figure}
 
-As shown in Figure \ref{fig:thread_scalability}, the performance generally follows the trend predicted by Amdahl's Law: increasing the number of threads reduces the execution time until a plateau is reached (around 6-8 threads). However, a significant anomaly is observed in the transition from **2 to 3 threads**, where the execution time drops abruptly from $\sim 0.0078$s to $\sim 0.0037$s—a reduction of over $50\%$ for only a $33\%$ increase in raw processing units.
+As shown in Fig. \ref{fig:thread_scalability}, performance follows Amdahl’s Law but exhibits an anomaly at **5 threads**, where execution time rises to $\sim 0.0051$s before dropping to a minimum at 6 threads.
 
-This "jump" suggests a transition from a software-bound bottleneck to a hardware-optimized state. In the context of the **Intel Xeon Sapphire Rapids** architecture, this behavior can be attributed to:
+\textbf{Memory Footprint Analysis:}
+With a $500 \times 500$ matrix split over two nodes ($250 \times 250$ sub-matrices):
 \begin{itemize}
-    \item \textbf{Cache Locality and Tiling}: Sapphire Rapids utilizes a multi-die (tile-based) architecture. With 5 threads, the sub-blocks of the $500 \times 500$ matrix might reach an optimal size that fits entirely within the L2 or L3 cache slices associated with the active cores, drastically reducing memory latency.
-    \item \textbf{Memory Controllers and Bandwidth}: The transition to 5 threads may trigger a more efficient use of the integrated Memory Controllers (iMCs), especially if the workload distribution better aligns with the mesh interconnect topology of the Sapphire Rapids socket.
-    \item \textbf{AVX-512 and AMX Utilization}: If the implementation utilizes Intel Advanced Matrix Extensions (AMX), the 5-thread configuration might reach the critical threshold for hardware acceleration that was underutilized with only 2 threads.
+    \item $250 \times 250 \times 4 \text{ bytes (float)} \approx 244 \text{ KB}$ per matrix.
+    \item Total footprint (5 matrices): $\sim 1.19 \text{ MB} < \text{L2 cache (2 MB)}$.
+\end{itemize}
+This confirms the data is L2-resident; thus, the regression is likely architectural.
+
+\textbf{Hypotheses for the 5-thread regression:}
+\begin{itemize}
+    \item \textbf{Hardware Conflict}: Unbalanced thread mapping across Sub-NUMA Clusters (SNC) or tiles, causing resource contention.
+    \item \textbf{Mesh Latency}: Increased traffic across the internal Mesh Interconnect (UPI) when crossing tile boundaries with an odd thread count.
+    \item \textbf{Synchronization Overhead}: OpenMP management costs for 5 threads may outweigh the computational gains for a relatively small $500 \times 500$ workload.
 \end{itemize}
 
 \subsection*{Matrix Dimension Scalability}
@@ -143,6 +151,13 @@ Figure \ref{fig:matrix_comparison} illustrates how the system handles increasing
     \item Moving from $N=1000$ to $N=2000$ ($0.3256$s) results in an increase of factor $\approx 8.16 \times$.
 \end{itemize}
 The theoretical scaling factor for doubling $N$ is $2^3 = 8$. The slight overhead observed at $N=1000$ is likely due to the increased communication volume in Systolic Array algorithm, as the MPI message sizes for sub-block swaps grow quadratically ($N^2$) with the matrix dimension.
+
+\textbf{Memory Occupation per Matrix:}
+\begin{itemize}
+    \item \textbf{500 $\times$ 500}: $250,000 \times 4 \text{ B} = 1,000,000 \text{ B} \approx \mathbf{0.95 \text{ MiB}}$ (Fits in L2 cache)
+    \item \textbf{1000 $\times$ 1000}: $1,000,000 \times 4 \text{ B} = 4,000,000 \text{ B} \approx \mathbf{3.81 \text{ MiB}}$ (Exceeds L2 per-core, fits in L3)
+    \item \textbf{2000 $\times$ 2000}: $4,000,000 \times 4 \text{ B} = 16,000,000 \text{ B} \approx \mathbf{15.26 \text{ MiB}}$ (Heavy L3/DRAM usage)
+\end{itemize}
 
 \section{CUDA}
 \section*{Introduction}
